@@ -44,10 +44,8 @@ I. RESPONSE FORMATTING RULES (MANDATORY)
 II. STRATEGIC ANALYSIS & COMMAND RULES (HOW TO THINK)
 1.  **FOCUS ON PENDING TASKS:** Look at the strategic plan and focus only on tasks with a 'PENDING' status.
 2.  **DO NOT REPEAT SUCCESS:** NEVER repeat a command that has already been successfully executed and has completed a task.
-3.  **SELF-TERMINATING COMMANDS:** Commands MUST be self-terminating (e.g., use `ping -c 4`, not `ping`).
-4.  **DO NOT INSTALL ANY TOOL:**
-5.  **Learn from Failures:** If a command fails, do not repeat it. Choose a different command.
-6.  **Goal Completion:** Once all tasks in the plan are 'COMPLETED', you MUST use the `finish_mission` tool.
+3.  **Learn from Failures:** If a command fails, do not repeat it. Choose a different command.
+4.  **Goal Completion:** Once all tasks in the plan are 'COMPLETED', you MUST use the `finish_mission` tool.
 
 III. AVAILABLE TOOLS:
 {self.tool_manager.get_tool_manifest()}
@@ -92,7 +90,7 @@ III. AVAILABLE TOOLS:
             )
         else:
             user_prompt = (
-                f"Based on the goal, plan, and history below, decide the single best command to execute next to progress on a PENDING task. Respond with a single, valid JSON object.\n\n"
+                f"Based on the goal, plan, and history below, decide the single best tool to use next to progress on a PENDING task. Respond with a single, valid JSON object.\n\n"
                 f"**Main Goal:** {goal}\n\n"
                 f"**Strategic Plan:**\n{self._format_plan(plan)}\n\n"
                 f"**Execution History (most recent last):\n{json.dumps(history, indent=2)}"
@@ -112,7 +110,8 @@ III. AVAILABLE TOOLS:
             if all_tasks_completed and plan:
                 logging.info("AI is summarizing the mission to finish.")
             else:
-                logging.info("AI's Next Action: %s", selection.tool_input)
+                logging.info(f"AI's Next Action: Using tool '{selection.tool_name}' with input '{selection.tool_input}'")
+
 
             return selection
         except (ValidationError, json.JSONDecodeError) as e:
@@ -120,7 +119,6 @@ III. AVAILABLE TOOLS:
             return ToolSelection(tool_name="finish_mission",
                                  tool_input="Mission failed: The AI produced an invalid JSON response.")
 
-    # --- THE FIX: This method's prompt is now much smarter about analysis tasks ---
     def get_completed_task_ids(self, goal: str, plan: List[TaskNode], history: List[Dict]) -> List[int]:
         """Asks the AI to identify which tasks are complete based on the latest action."""
         plan_update_prompt = (

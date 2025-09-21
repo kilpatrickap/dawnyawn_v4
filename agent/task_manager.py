@@ -1,4 +1,4 @@
-# dawnyawn/agent/task_manager.py (Final Version with Simplified Plan Update Logic)
+# dawnyawn/agent/task_manager.py (Final Version with ToolManager Integration)
 import os
 import json
 import logging
@@ -19,14 +19,14 @@ class TaskManager:
         from agent.agent_scheduler import AgentScheduler
         from agent.thought_engine import ThoughtEngine
         from tools.tool_manager import ToolManager
-        from services.mcp_client import McpClient
 
         self.goal = goal
         self.plan: list[TaskNode] = []
         self.mission_history = []
         self.scheduler = AgentScheduler()
-        self.thought_engine = ThoughtEngine(ToolManager())
-        self.mcp_client = McpClient()
+        # --- FIX: Create and store the ToolManager instance ---
+        self.tool_manager = ToolManager()
+        self.thought_engine = ThoughtEngine(self.tool_manager)
         os.makedirs(PROJECTS_DIR, exist_ok=True)
 
     def initialize_mission(self):
@@ -37,7 +37,6 @@ class TaskManager:
                 os.remove(SESSION_FILE)
                 logging.info("Previous session file deleted. Starting a fresh mission.")
 
-    # --- THE FIX: This method now takes a simple list of IDs and updates the plan ---
     def _update_plan_status(self):
         """Gets completed task IDs from the AI and updates the plan state."""
         logging.info("📝 Assessing plan progress based on recent actions...")
@@ -52,7 +51,6 @@ class TaskManager:
                 task.status = TaskStatus.COMPLETED
                 logging.info("  - Status Updated: Task %d is now COMPLETED.", task.task_id)
 
-    # ... ( _save_state and _load_state are unchanged) ...
     def _save_state(self):
         state = {"goal": self.goal, "plan": [task.model_dump() for task in self.plan],
                  "mission_history": self.mission_history}
@@ -100,22 +98,38 @@ class TaskManager:
         try:
             while True:
                 action = self.thought_engine.choose_next_action(self.goal, self.plan, self.mission_history)
-                if action.tool_name == "finish_mission":
+
+                # Use the tool name defined in the manager for consistency
+                if action.tool_name == self.tool_manager.finish_mission_tool_name:
                     logging.info("AI has decided the mission is complete.");
                     self.mission_history.append({"command": "finish_mission", "observation": action.tool_input});
                     break
 
-                filename, file_content = self.mcp_client.execute_command(action.tool_input)
-                observation = file_content or f"Command '{action.tool_input}' produced no output."
+                # --- MAJOR FIX: Use the ToolManager to execute the chosen tool ---
+                tool_to_execute = self.tool_manager.get_tool(action.tool_name)
+
+                if not tool_to_execute:
+                    logging.error("AI selected a non-existent tool: '%s'", action.tool_name)
+                    observation = f"Error: The tool '{action.tool_name}' is not valid."
+                    filename = None
+                else:
+                    try:
+                        # Execute the tool and get the results
+                        filename, observation = tool_to_execute.execute(action.tool_input)
+                    except Exception as e:
+                        logging.error("An exception occurred during tool execution for '%s': %s", action.tool_name, e,
+                                      exc_info=True)
+                        filename, observation = None, f"Tool '{action.tool_name}' failed with error: {e}"
+
                 if filename:
                     local_filepath = os.path.join(PROJECTS_DIR, filename)
                     with open(local_filepath, 'w', encoding='utf-8') as f:
                         f.write(observation)
                     logging.info("Observation saved to '%s'", local_filepath)
-                else:
-                    logging.error("Command execution failed: %s", observation)
 
-                self.mission_history.append({"command": action.tool_input, "observation": observation})
+                # Use the original tool input for the history log
+                self.mission_history.append(
+                    {"command": f"[{action.tool_name}] {action.tool_input}", "observation": observation})
                 self._update_plan_status()
                 self._save_state()
 

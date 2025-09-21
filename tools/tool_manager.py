@@ -1,68 +1,54 @@
-# dawnyawn/tools/tool_manager.py (Updated Version)
-import os
-import importlib
+# dawnyawn/tools/tool_manager.py
 import logging
-from tools.base_tool import BaseTool
+from typing import Dict, Optional
 
+# --- Import all your tool classes ---
+from tools.base_tool import BaseTool
+from tools.nmap_tool import NmapTool
+from tools.gobuster_tool import GobusterTool
+
+
+# Add imports for WhatWebTool, SqlmapTool, etc. as you create them
 
 class ToolManager:
-    """Function Registry that dynamically loads and holds all available tools."""
+    """Manages the registration and execution of all available tools."""
 
     def __init__(self):
-        """Initializes the ToolManager and triggers the tool discovery process."""
-        self._tools: dict[str, BaseTool] = {}
-        logging.info("Initializing ToolManager and discovering tools...")
-        self._discover_and_register_tools()
+        self.tools: Dict[str, BaseTool] = {}
+        # --- Register all your tools here ---
+        self._register_tool(NmapTool())
+        self._register_tool(GobusterTool())
+        # self._register_tool(WhatWebTool())
+        # self._register_tool(SqlmapTool())
 
-    def _discover_and_register_tools(self):
-        """Dynamically finds, imports, and registers tools from the 'tools' directory."""
-        tools_dir = os.path.dirname(__file__)
-        for filename in os.listdir(tools_dir):
-            # Process only Python files, ignoring special files like __init__.py or base_tool.py
-            if filename.endswith(".py") and not filename.startswith(("_", "base_tool")):
-                module_name = f"tools.{filename[:-3]}"
-                try:
-                    # Dynamically import the module
-                    module = importlib.import_module(module_name)
+        # A special tool for when the AI decides the mission is over.
+        # It doesn't execute a command, so it doesn't inherit from BaseTool.
+        self.finish_mission_tool_name = "finish_mission"
+        logging.info("ToolManager initialized with %d tools.", len(self.tools))
 
-                    # Scan the module for a class that inherits from BaseTool
-                    for item_name in dir(module):
-                        item = getattr(module, item_name)
-                        if isinstance(item, type) and issubclass(item, BaseTool) and item is not BaseTool:
-                            tool_instance = item()
-                            self._tools[tool_instance.name] = tool_instance
-                            logging.info("Dynamically loaded tool: '%s'", tool_instance.name)
-                            # Assuming one tool class per file for simplicity
-                            break
+    def _register_tool(self, tool_instance: BaseTool):
+        """Registers a single tool instance."""
+        if tool_instance.name in self.tools:
+            raise ValueError(f"Tool with name '{tool_instance.name}' is already registered.")
+        self.tools[tool_instance.name] = tool_instance
+        logging.info("  - Registered tool: '%s'", tool_instance.name)
 
-                except ImportError as e:
-                    logging.warning("Failed to import module %s. Error: %s", module_name, e)
-                except Exception as e:
-                    logging.error("An unexpected error occurred while loading tool from %s. Error: %s", module_name, e)
-
-    def get_tool(self, tool_name: str) -> BaseTool:
-        """Retrieves a registered tool by its name."""
-        return self._tools.get(tool_name)
+    def get_tool(self, tool_name: str) -> Optional[BaseTool]:
+        """Retrieves a tool instance by its name."""
+        return self.tools.get(tool_name)
 
     def get_tool_manifest(self) -> str:
         """
-        Returns a formatted string of all available tools for the LLM's system prompt.
-        Includes the special 'finish_mission' command.
+        Generates a formatted string of all available tools and their
+        descriptions for the AI's system prompt. THIS IS THE KEY.
         """
-        manifest = "Your response must select one of the following available tools:\n"
+        manifest = []
+        for tool in self.tools.values():
+            manifest.append(f'- `{tool.name}`: {tool.description}')
 
-        # Add the special 'finish_mission' command to the manifest for the LLM
-        manifest += (
-            "- Tool Name: `finish_mission`\n"
-            "  Description: Use this tool ONLY when you have fully accomplished the user's goal and have all the "
-            "information needed. Provide a final, detailed summary of your findings as the input.\n"
+        # Add the special finish_mission tool to the manifest
+        manifest.append(
+            '- `finish_mission`: Use this tool when all tasks are complete. The '
+            'tool_input should be a final, detailed summary of all findings.'
         )
-
-        # Add all dynamically loaded tools to the manifest
-        if not self._tools:
-            manifest += "\n- No other tools are currently available."
-        else:
-            for tool in self._tools.values():
-                manifest += f"- Tool Name: `{tool.name}`\n  Description: {tool.description}\n"
-
-        return manifest
+        return "\n".join(manifest)

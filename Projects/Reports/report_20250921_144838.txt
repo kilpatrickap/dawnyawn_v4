@@ -1,0 +1,21 @@
+--- DAWNYAWN MISSION REPORT ---
+===================================
+
+Mission Goal: In two steps, Find out what web server is running on www.consarltd.com.
+Report Generated: 2025-09-21 14:48:38
+
+--- EXECUTION LOG ---
+=====================
+
+Step 1:
+----------
+  Action Command:
+    `nmap -sV www.consarltd.com`
+
+  Observation:
+    Agent-side connection error: 500 Server Error: Internal Server Error for url: http://127.0.0.1:1611/execute
+
+--- FINAL SUMMARY ---
+=====================
+
+Mission did not conclude with a `finish_mission` command.

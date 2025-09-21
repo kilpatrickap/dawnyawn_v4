@@ -1,23 +1,43 @@
 # dawnyawn/tools/base_tool.py
 from abc import ABC, abstractmethod
+from services.mcp_client import McpClient
+from typing import Tuple
 
 
 class BaseTool(ABC):
-    """Abstract base class for all tools available to the agent."""
+    """Abstract base class for all agent tools."""
 
     @property
     @abstractmethod
     def name(self) -> str:
-        """The unique name of the tool, used by the Thought Engine for selection."""
+        """The unique name of the tool (e.g., 'nmap_scan')."""
         pass
 
     @property
     @abstractmethod
     def description(self) -> str:
-        """A clear description of what the tool does, for the LLM to understand its purpose."""
+        """
+        A detailed description for the AI to understand what the tool does
+        and what input it expects. This is CRITICAL for the AI's reasoning.
+        """
         pass
 
+    def __init__(self):
+        self.mcp_client = McpClient()
+
     @abstractmethod
-    def execute(self, tool_input: str) -> str:
-        """Executes the tool with the given input and returns the raw string result."""
+    def _construct_command(self, tool_input: str) -> str:
+        """
+        Takes the simple input from the AI and constructs the full,
+        executable shell command.
+        """
         pass
+
+    def execute(self, tool_input: str) -> Tuple[str, str]:
+        """
+        Executes the command on the remote Kali server via the McpClient.
+        This method is shared by all tools.
+        """
+        full_command = self._construct_command(tool_input)
+        print(f"  > Executing constructed command: `{full_command}`")
+        return self.mcp_client.execute_command(full_command)
