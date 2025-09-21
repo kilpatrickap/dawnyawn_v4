@@ -6,9 +6,15 @@ from typing import Dict, Optional
 from tools.base_tool import BaseTool
 from tools.nmap_tool import NmapTool
 from tools.gobuster_tool import GobusterTool
+from tools.dns_tool import DnsTool
+from tools.ping_tool import PingTool
+from tools.curl_tool import CurlTool
+from tools.whois_tool import WhoisTool
+from tools.whatweb_tool import WhatWebTool
+from tools.nikto_tool import NiktoTool
+from tools.sqlmap_tool import SqlmapTool
+from tools.hydra_tool import HydraTool
 
-
-# Add imports for WhatWebTool, SqlmapTool, etc. as you create them
 
 class ToolManager:
     """Manages the registration and execution of all available tools."""
@@ -18,14 +24,19 @@ class ToolManager:
         # --- Register all your tools here ---
         self._register_tool(NmapTool())
         self._register_tool(GobusterTool())
-        # self._register_tool(WhatWebTool())
-        # self._register_tool(SqlmapTool())
+        self._register_tool(DnsTool())
+        self._register_tool(PingTool())
+        self._register_tool(CurlTool())
+        self._register_tool(WhoisTool())
+        self._register_tool(WhatWebTool())
+        self._register_tool(NiktoTool())
+        self._register_tool(SqlmapTool())
+        self._register_tool(HydraTool())
 
-        # A special tool for when the AI decides the mission is over.
-        # It doesn't execute a command, so it doesn't inherit from BaseTool.
         self.finish_mission_tool_name = "finish_mission"
         logging.info("ToolManager initialized with %d tools.", len(self.tools))
 
+    # ... (the rest of the file remains the same) ...
     def _register_tool(self, tool_instance: BaseTool):
         """Registers a single tool instance."""
         if tool_instance.name in self.tools:
@@ -40,13 +51,14 @@ class ToolManager:
     def get_tool_manifest(self) -> str:
         """
         Generates a formatted string of all available tools and their
-        descriptions for the AI's system prompt. THIS IS THE KEY.
+        descriptions for the AI's system prompt.
         """
         manifest = []
-        for tool in self.tools.values():
+        # Sort tools by name for a consistent prompt
+        for tool_name in sorted(self.tools.keys()):
+            tool = self.tools[tool_name]
             manifest.append(f'- `{tool.name}`: {tool.description}')
 
-        # Add the special finish_mission tool to the manifest
         manifest.append(
             '- `finish_mission`: Use this tool when all tasks are complete. The '
             'tool_input should be a final, detailed summary of all findings.'
