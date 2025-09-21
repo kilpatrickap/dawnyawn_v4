@@ -15,6 +15,7 @@ class GobusterTool(BaseTool):
         )
 
     def _construct_command(self, tool_input: str) -> str:
-        # We pre-configure a common wordlist. The AI just needs to provide the URL.
-        wordlist = "/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt"
+        # --- THE FIX: Reference the wordlist copied into our app directory ---
+        # This path is now reliable and controlled by our project.
+        wordlist = "/app/wordlists/common.txt"
         return f"gobuster dir -u {tool_input} -w {wordlist} -t 50 --no-error"

@@ -24,18 +24,24 @@ RUN apt-get update && apt-get install -y \
     hydra \
     # Metasploit is very large, uncomment it if you need its power
     # metasploit-framework \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
 
-# 4. Configure the SSH Server
+# 4. --- NEW SECTION: COPY PROJECT-SPECIFIC RESOURCES ---
+# Create a directory for our application resources inside the container
+WORKDIR /app
+# Copy the wordlists from the host machine into the container
+COPY ./wordlists /app/wordlists
+
+# 5. Configure the SSH Server
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 RUN mkdir -p /root/.ssh
 
-# 5. Authorize your SSH key
+# 6. Authorize your SSH key
 COPY id_ecdsa.pub /root/.ssh/authorized_keys
 RUN chmod 600 /root/.ssh/authorized_keys
 
-# 6. Expose the SSH port
+# 7. Expose the SSH port
 EXPOSE 22
 
-# 7. Start the SSH server
+# 8. Start the SSH server
 CMD ["/usr/sbin/sshd", "-D"]

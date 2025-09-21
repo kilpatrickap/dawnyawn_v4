@@ -6,3 +6,4 @@ python main.py "In two steps, Find out what web server is running on www.pentest
 
 python main.py "Perform a security audit on www.pentest-ground.com. Your task is to conduct a professional security assessment. Start by gathering information with tools like nmap to understand the system. Then, identify potential vulnerabilities."
 
+curl -o wordlists/common.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/common.txt
