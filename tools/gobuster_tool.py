@@ -11,7 +11,7 @@ class GobusterTool(BaseTool):
         return (
             "Discovers hidden directories and files on a web server using Gobuster. "
             "The input must be the full base URL of the target, including http/https. "
-            "Example: 'http://www.consarltd.com'"
+            "Example: 'http://www.pentest-ground.com'"
         )
 
     def _construct_command(self, tool_input: str) -> str:
