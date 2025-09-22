@@ -43,8 +43,8 @@ I. RESPONSE FORMATTING RULES (MANDATORY)
 
 II. STRATEGIC ANALYSIS & COMMAND RULES (HOW TO THINK)
 1.  **FOCUS ON PENDING TASKS:** Look at the strategic plan and focus only on tasks with a 'PENDING' status.
-2.  **DO NOT REPEAT SUCCESS:** NEVER repeat a command that has already been successfully executed and has completed a task.
-3.  **Learn from Failures:** If a command fails, do not repeat it. Choose a different command.
+2.  **DO NOT REPEAT YOURSELF:** If you have already used a tool and it did not complete the task, DO NOT use that same tool with the same input again. Choose a different tool to make progress.
+3.  **Learn from Failures:** If a tool fails or provides no useful information for the current task, choose a different tool.
 4.  **Goal Completion:** Once all tasks in the plan are 'COMPLETED', you MUST use the `finish_mission` tool.
 
 III. AVAILABLE TOOLS:
@@ -121,11 +121,13 @@ III. AVAILABLE TOOLS:
 
     def get_completed_task_ids(self, goal: str, plan: List[TaskNode], history: List[Dict]) -> List[int]:
         """Asks the AI to identify which tasks are complete based on the latest action."""
+        # --- THE FIX: This prompt is now much stricter about analysis tasks ---
         plan_update_prompt = (
             "You are an expert project manager AI. Your job is to determine which tasks are now complete. "
             "Review the strategic plan and the observation from the MOST RECENT command.\n\n"
             "**CRITICAL INSTRUCTION:** The output from one command (like a port scan) might contain all the information needed to complete subsequent 'analysis' tasks. "
             "For example, if Task 1 is 'Scan the target' and Task 2 is 'Identify the web server', the output of the `nmap` scan for Task 1 likely contains the web server name, completing Task 2 at the same time.\n\n"
+            "**BE STRICT:** Only mark a task as complete if the observation explicitly and fully provides the information required by the task description. If a task requires an Nmap scan, the observation MUST contain Nmap results.\n\n"
             "Identify ALL task IDs that are now fully completed by the last action's observation. "
             "Your response MUST be a single JSON object with one key: `\"completed_task_ids\"`, which is a list of integers. "
             "Example: `{\"completed_task_ids\": [1, 2]}`. If no tasks were completed, return an empty list.\n\n"

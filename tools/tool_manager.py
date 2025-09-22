@@ -14,6 +14,7 @@ from tools.whatweb_tool import WhatWebTool
 from tools.nikto_tool import NiktoTool
 from tools.sqlmap_tool import SqlmapTool
 from tools.hydra_tool import HydraTool
+from tools.subdomain_tool import SubdomainTool
 
 
 class ToolManager:
@@ -32,6 +33,7 @@ class ToolManager:
         self._register_tool(NiktoTool())
         self._register_tool(SqlmapTool())
         self._register_tool(HydraTool())
+        self._register_tool(SubdomainTool())
 
         self.finish_mission_tool_name = "finish_mission"
         logging.info("ToolManager initialized with %d tools.", len(self.tools))
