@@ -15,4 +15,5 @@ class NiktoTool(BaseTool):
         )
 
     def _construct_command(self, tool_input: str) -> str:
-        return f"nikto -h '{tool_input}'"
+        # return f"nikto -host '{tool_input}' -maxtime 60"
+        return f"nikto -Display 1234EP -o report.html -Format htm -Tuning 123bde -host '{tool_input}'"

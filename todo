@@ -2,8 +2,12 @@ python kali_server.py
 
 python main.py "Perform a brief ping on www.google.com."
 
-python main.py "In two steps, Find out what web server is running on www.pentest-ground.com."
+python main.py "In one step, Find out vulnerabilities on www.pentest-ground.com using nikto."
 
 python main.py "Perform a security audit on www.pentest-ground.com. Your task is to conduct a professional security assessment. Start by gathering information with tools like nmap to understand the system. Then, identify potential vulnerabilities."
+
+python main.py "Perform a security audit on www.pentest-ground.com. Your task is to conduct a professional security assessment using nikto. Then, identify potential vulnerabilities."
+
+
 
 curl -o wordlists/common.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/common.txt
